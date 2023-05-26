@@ -12,6 +12,7 @@ code.Nm, .Fl, .Cm, .Ic, code.In, .Fd, .Fn, .Cd { font-weight: bold;
 /* Custom */
 body {
   font-family: sans-serif;
+  line-height: 1.3rem;
 }
 
 main, .head, .manual-text, .foot {
@@ -45,7 +46,7 @@ a {
 
 @media (prefers-color-scheme: dark) {
   body {
-    color: white;
+    color: rgb(230, 230, 230);
     background-color: #27344a;
   }
 
