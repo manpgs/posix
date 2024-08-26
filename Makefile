@@ -15,9 +15,9 @@ REDIRECT = 1
 ifeq ($(REDIRECT),1)
 	FILTER=sed \
 		-e "$$(printf '%s\n' '/<body>/,/<\/body>/c\' '<body>Redirecting&hellip;</body>')"\
-		-e 's|<title>\(.*\)(0P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/\1.html">|'\
-		-e 's|<title>\(.*\)(1P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9699919799/utilities/\1.html">|'\
-		-e 's|<title>\(.*\)(3P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9699919799/functions/\1.html">|'\
+		-e 's|<title>\(.*\)(0P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/\1.html">|'\
+		-e 's|<title>\(.*\)(1P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9799919799/utilities/\1.html">|'\
+		-e 's|<title>\(.*\)(3P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9799919799/functions/\1.html">|'\
 		-e '/http-equiv/y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/'
 endif
 
