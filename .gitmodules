@@ -1,0 +1,3 @@
+[submodule "man-posix"]
+	path = man-posix
+	url = git@github.com:mohd-akram/man-posix.git

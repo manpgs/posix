@@ -1,8 +1,8 @@
-base_url = https://mirrors.edge.kernel.org/pub/linux/docs/man-pages/man-pages-posix/
-
 BASE_URL = https://manp.gs/posix/
 
-dirs = 0 1 3
+base_url = https://pubs.opengroup.org/onlinepubs/9799919799
+
+dirs = 1 3
 
 MANDOC=mandoc
 FLAGS=-Oman=../%S/%N,style=../style.css
@@ -15,10 +15,9 @@ REDIRECT = 1
 ifeq ($(REDIRECT),1)
 	FILTER=sed \
 		-e "$$(printf '%s\n' '/<body>/,/<\/body>/c\' '<body>Redirecting&hellip;</body>')"\
-		-e 's|<title>\(.*\)(0P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/\1.html">|'\
-		-e 's|<title>\(.*\)(1P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9799919799/utilities/\1.html">|'\
-		-e 's|<title>\(.*\)(3P)</title>|&\n  <meta http-equiv="refresh" content="0;url=https://pubs.opengroup.org/onlinepubs/9799919799/functions/\1.html">|'\
-		-e '/http-equiv/y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/'
+		-e '/<title>.*(1P)<\/title>/{ s|<title>.*</title>|<title>$*(1)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/utilities/$*.html">|; H; x; }' \
+		-e '/<title>.*\.H(3P)<\/title>/{ s|<title>.*</title>|<title>$*(3)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/basedefs/$*.html">|; H; x; }' \
+		-e '/<title>.*(3P)<\/title>/{ s|<title>.*</title>|<title>$*(3)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/functions/$*.html">|; H; x; }'
 endif
 
 template = <!doctype html>\n<html lang="en">\n\
@@ -37,36 +36,34 @@ sitemap = <?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.site
 
 desc = desc() { \
 case $$1 in \
-0) echo Headers ;; \
 1) echo Utilities ;; \
-3) echo Functions ;; \
+3) echo "Headers & Functions" ;; \
 esac; \
 };
 
-html = $(shell find man/man?? -type f | sed 's|^.*/\([^/]*\)\.\([0-9]\)p$$|\2/\1.html|')
+html = $(shell find man-posix/man?? -type f \
+	! -name *.7p \
+	! -name intro.1p \
+	! -name shell.1p \
+	! -name intro.3p \
+	! -name info.3p \
+	| sed 's|^.*/\([^/]*\)\.\([0-9]\)p$$|\2/\1.html|')
 
-all: man $(dirs) index.html
+all: $(dirs) index.html
+	cd man-posix && $(MAKE)
 	$(MAKE) $(html)
 	$(MAKE) sitemap.xml
 
 $(dirs):
 	mkdir -p "$@"
 
-posix-man-pages.tar.gz:
-	curl -o $@ "${base_url}$$(curl ${base_url} | \
-		grep -o 'man-pages-posix-[^"]*.tar.gz' | tail -n1)"
-
-man: posix-man-pages.tar.gz
-	tar -xf posix-man-pages.tar.gz
-	mv man-pages-posix-* man
-
-man/whatis: man
-	/usr/libexec/makewhatis man
-	printf '%s\n' '1,$$s/(\([0-9]\)p)/(\1)/g' w q | ed -s man/whatis
+whatis:
+	/usr/libexec/makewhatis man-posix
+	sed -e 's/(\([0-9]\)p)/(\1)/g' -e "s/\[aq]/'/g" man-posix/whatis > whatis
+	rm man-posix/whatis
 
 clean:
-	$(RM) -r index.html sitemap.xml $(dirs) man posix-man-pages.tar.gz
-
+	$(RM) -r index.html sitemap.xml whatis $(dirs)
 
 index.html: $(addsuffix /index.html,$(dirs))
 	$(desc) \
@@ -90,7 +87,7 @@ sitemap.xml:
 		}'; \
 	)" > "$@"
 
-%/index.html: man/whatis
+%/index.html: whatis
 	$(desc) \
 	sect=$$(dirname "$@"); \
 	printf '$(template)' "man$$sect &mdash; POSIX Manpages" "../style.css" \
@@ -106,19 +103,17 @@ sitemap.xml:
 			s|('"$$sect"')|&|; \
 		' -e 't link' -e b -e :link -e '\
 			s|\([^, ][^(]*\)([0-9n][^)]*)|<a href="./\1">&</a>|g; \
+			s|\(<a href="\./[^"]*\)/|\1_|g; \
 			s|^|        <li>|; \
 			G; \
 			s|\n| \&mdash; |; \
 			s|$$|</li>|p; \
-		' man/whatis; \
+		' whatis; \
 		printf '      </ul>\n' \
 	)" > "$@"
 
-0/%.html: man/man0p/%.0p
+1/%.html: man-posix/man1p/%.1p
 	$(BUILD)
 
-1/%.html: man/man1p/%.1p
-	$(BUILD)
-
-3/%.html: man/man3p/%.3p
+3/%.html: man-posix/man3p/%.3p
 	$(BUILD)
