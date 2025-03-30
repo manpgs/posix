@@ -1,24 +1,30 @@
+AWK = awk
+FIND = find
+MAKEWHATIS = /usr/libexec/makewhatis
+MANDOC = mandoc
+MKDIR_P = mkdir -p
+SED = sed
+
 BASE_URL = https://manp.gs/posix/
+REDIRECT = 1
 
 base_url = https://pubs.opengroup.org/onlinepubs/9799919799
 
 dirs = 1 3
 
-MANDOC=mandoc
-FLAGS=-Oman=../%S/%N,style=../style.css
-FILTER=sed '/<pre>/,/<\/pre>/{/^<br\/>$$/d;}'
-CMD=$(MANDOC) $(FLAGS) -Thtml "$<" | $(FILTER)
-BUILD=$(CMD) > "$@"
-
-REDIRECT = 1
+filter = $(SED) '/<pre>/,/<\/pre>/{/^<br\/>$$/d;}'
 
 ifeq ($(REDIRECT),1)
-	FILTER=sed \
+	filter = $(SED) \
 		-e "$$(printf '%s\n' '/<body>/,/<\/body>/c\' '<body>Redirecting&hellip;</body>')"\
-		-e '/<title>.*(1P)<\/title>/{ s|<title>.*</title>|<title>$*(1)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/utilities/$*.html">|; H; x; }' \
-		-e '/<title>.*\.H(3P)<\/title>/{ s|<title>.*</title>|<title>$*(3)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/basedefs/$*.html">|; H; x; }' \
-		-e '/<title>.*(3P)<\/title>/{ s|<title>.*</title>|<title>$*(3)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/functions/$*.html">|; H; x; }'
+		-e '/<title>.*(1P)<\/title>/{ s|<title>.*</title>|<title>$*(1)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/utilities/$*.html">|; H; g; }' \
+		-e '/<title>.*\.H(3P)<\/title>/{ s|<title>.*</title>|<title>$*(3)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/basedefs/$*.html">|; H; g; }' \
+		-e '/<title>.*(3P)<\/title>/{ s|<title>.*</title>|<title>$*(3)</title>|; h; s|.*|  <meta http-equiv="refresh" content="0;url=$(base_url)/functions/$*.html">|; H; g; }'
 endif
+
+man2html = $(MANDOC) -Oman=../%S/%N,style=../style.css -Thtml "$<" | $(filter)
+
+convert = $(man2html) > "$@"
 
 template = <!doctype html>\n<html lang="en">\n\
 \40<head>\n\
@@ -41,13 +47,13 @@ case $$1 in \
 esac; \
 };
 
-html = $(shell find man-posix/man?? -type f \
+html = $(shell $(FIND) man-posix/man?? -type f \
 	! -name *.7p \
 	! -name intro.1p \
 	! -name shell.1p \
 	! -name intro.3p \
 	! -name info.3p \
-	| sed 's|^.*/\([^/]*\)\.\([0-9]\)p$$|\2/\1.html|')
+	| $(SED) 's|^.*/\([^/]*\)\.\([0-9]\)p$$|\2/\1.html|')
 
 all: $(dirs) index.html
 	cd man-posix && $(MAKE)
@@ -55,12 +61,12 @@ all: $(dirs) index.html
 	$(MAKE) sitemap.xml
 
 $(dirs):
-	mkdir -p "$@"
+	$(MKDIR_P) "$@"
 
 whatis:
-	/usr/libexec/makewhatis man-posix
-	sed -e 's/(\([0-9]\)p)/(\1)/g' -e "s/\[aq]/'/g" man-posix/whatis > whatis
-	rm man-posix/whatis
+	$(MAKEWHATIS) man-posix
+	$(SED) -e 's/(\([0-9]\)p)/(\1)/g' -e "s/\[aq]/'/g" man-posix/whatis > whatis
+	$(RM) man-posix/whatis
 
 clean:
 	$(RM) -r index.html sitemap.xml whatis $(dirs)
@@ -79,7 +85,7 @@ sitemap.xml:
 		(echo "" && printf '%s/\n' $(dirs)) | while read dir; do \
 			printf "  <url><loc>%s%s</loc></url>\n" "$(BASE_URL)" "$$dir"; \
 		done; \
-		find $(dirs) -type f ! -name index.html | sort | awk '{ \
+		$(FIND) $(dirs) -type f ! -name index.html | sort | $(AWK) '{ \
 			sub(/\.[^.]+$$/, ""); \
 			gsub(/ /, "%20"); \
 			gsub(/\[/, "%5B"); \
@@ -93,27 +99,25 @@ sitemap.xml:
 	printf '$(template)' "man$$sect &mdash; POSIX Manpages" "../style.css" \
 		"<a href=\"../\">POSIX</a> &mdash; $$(desc "$$sect")" "$$(\
 		printf '      <ul class="whatis">\n'; \
-		sed -n -e ' \
+		$(SED) -n -e ' \
 			h; \
 			s/ - /\n/; \
-			s|.*\n||; \
+			s/.*\n//; \
 			x; \
-			s| - .*||; \
-		' -e 't clear' -e :clear -e ' \
-			s|('"$$sect"')|&|; \
-		' -e 't link' -e b -e :link -e '\
+			s/ - .*//; \
+		' -e "/($$sect)/!b" -e ' \
 			s|\([^, ][^(]*\)([0-9n][^)]*)|<a href="./\1">&</a>|g; \
 			s|\(<a href="\./[^"]*\)/|\1_|g; \
-			s|^|        <li>|; \
+			s/^/        <li>/; \
 			G; \
-			s|\n| \&mdash; |; \
+			s/\n/ \&mdash; /; \
 			s|$$|</li>|p; \
 		' whatis; \
 		printf '      </ul>\n' \
 	)" > "$@"
 
 1/%.html: man-posix/man1p/%.1p
-	$(BUILD)
+	$(convert)
 
 3/%.html: man-posix/man3p/%.3p
-	$(BUILD)
+	$(convert)
