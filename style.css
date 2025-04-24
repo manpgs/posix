@@ -6,26 +6,62 @@ td.head-vol { text-align: center; }
 .Pa, .Ad { font-style: italic; }
 .Ms { font-weight: bold; }
 .Bl-diag > dt { font-weight: bold; }
-code.Nm, .Fl, .Cm, .Ic, code.In, .Fd, .Fn, .Cd { font-weight: bold;
-  font-family: inherit; }
+code.Nm, .Fl, .Cm, .Ic, code.In, .Fd, .Fn, .Cd { font-weight: bold; }
+.Bd-indent:not(ol,ul) { margin-left: 2.5rem; }
 
 /* Custom */
 body {
-  font-family: sans-serif;
-  line-height: 1.3;
+  font: medium sans-serif;
+  line-height: 1.4;
+  max-width: 45rem;
+  margin: 0 auto;
+  padding: 0.5rem;
 }
 
-main, .head, .manual-text, .foot {
-  max-width: 80ch;
+h1 {
+  border-bottom: 0.15rem solid;
+  padding-bottom: 0.2rem;
+}
+
+h1 a, h2 a {
+  text-decoration: none;
+}
+
+h2 {
+  font-size: large;
+}
+
+header, main, .head, .manual-text, .foot {
+  max-width: 40rem;
   margin: 0 auto;
 }
 
-li, dd {
-  margin-bottom: 0.5rem;
+header {
+  text-align: center;
+}
+
+nav {
+  overflow: auto;
+}
+
+.sections thead {
+  display: none;
+}
+
+.os {
+  float: left;
+}
+
+.section {
+  float: right;
 }
 
 a {
-  text-decoration: none;
+  text-underline-offset: 0.1rem;
+}
+
+dd, li {
+  margin-bottom: 0.5rem;
 }
 
 .whatis {
@@ -33,24 +69,48 @@ a {
   padding: 0;
 }
 
+.whatis thead {
+  display: none;
+}
+
+.names {
+  max-width: 15rem;
+  vertical-align: top;
+}
+
+.names::after {
+  content: '\2014';
+  float: right;
+}
+
+.summary {
+  vertical-align: bottom;
+}
+
 /** Colors */
+
+html {
+  background: #fafafa;
+}
 
 body {
   color: black;
-  background-color: white;
+  background: white;
 }
 
 a {
-  color: rgb(90, 90, 90);
+  color: black;
 }
 
 @media (prefers-color-scheme: dark) {
-  body {
-    color: rgb(230, 230, 230);
-    background-color: #27344a;
+  html {
+    background: rgb(27, 28, 31);
   }
-
+  body {
+    color: rgb(217, 218, 222);
+    background: rgb(41, 42, 47);
+  }
   a {
-    color: #bed0e1;
+    color: rgb(198, 201, 214);
   }
 }
