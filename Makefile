@@ -80,7 +80,7 @@ whatis:
 clean:
 	$(RM) -r index.html sitemap.xml whatis $(dirs)
 
-index.html: $(addsuffix /index.html,$(dirs))
+index.html: $(addsuffix /index.html,$(dirs)) main.js
 	$(desc) \
 	printf '$(template)' "POSIX man pages" "style.css" "POSIX" "Manual Pages" "$$(\
 		printf '      <table class="sections">\n        <thead><tr><th>Section</th><th>Title</th></tr></thead>\n        <tbody>\n'; \
@@ -88,7 +88,8 @@ index.html: $(addsuffix /index.html,$(dirs))
 			printf '          <tr><td>%s</td><td><a href="%s">%s</a></td></tr>\n' \
 				"$$s" "$$s" "$$(desc "$$s")"; \
 		done; \
-		printf '        </tbody>\n      </table>\n' \
+		printf '        </tbody>\n      </table>\n'; \
+		printf '      <script>\n%s\n      </script>\n' "$$(sed 's/^./        &/' main.js)" \
 	)" > "$@"
 
 sitemap.xml:
